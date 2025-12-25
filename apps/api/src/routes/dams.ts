@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { getHistoryByDam, getLatestByDam } from "../db/dao/observations";
+import { getHistoryByDam, getLatestByDam, listDamNames } from "../db/dao/observations";
 
 const historyQuerySchema = z.object({
   from: z.string().optional(),
@@ -19,6 +19,8 @@ function isValidDate(value?: string) {
 }
 
 export function registerDamRoutes(app: FastifyInstance) {
+  app.get("/dams", async () => listDamNames());
+
   app.get("/dams/:damName/latest", async (request, reply) => {
     const { damName } = request.params as { damName: string };
     const result = getLatestByDam(damName);

@@ -1,10 +1,23 @@
-import { sharedMessage } from "@shared";
+import * as React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "sonner";
+import { Dashboard } from "./pages/Dashboard";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false
+    }
+  }
+});
 
 export default function App() {
   return (
-    <main className="page">
-      <h1>Water Dashboard</h1>
-      <p className="muted">{sharedMessage}</p>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <Dashboard />
+      <Toaster richColors position="top-right" />
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }

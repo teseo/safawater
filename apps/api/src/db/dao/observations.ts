@@ -36,7 +36,7 @@ export function upsertObservation(observation: ObservationInput) {
       extra_json = excluded.extra_json`
   );
 
-  statement.run(
+  const result = statement.run(
     observation.sourceId,
     observation.damName,
     observation.region ?? null,
@@ -47,6 +47,8 @@ export function upsertObservation(observation: ObservationInput) {
     observation.lastYearPercent ?? null,
     observation.extraJson ?? null
   );
+
+  return result.changes;
 }
 
 type ObservationRow = {
@@ -121,4 +123,17 @@ export function getHistoryByDam(
 
   const rows = db.prepare(sql).all(...params) as ObservationRow[];
   return rows.map(mapObservation);
+}
+
+export function listDamNames() {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      `SELECT DISTINCT dam_name AS damName
+       FROM dam_level_observations
+       ORDER BY dam_name ASC`
+    )
+    .all() as Array<{ damName: string }>;
+
+  return rows.map((row) => row.damName);
 }

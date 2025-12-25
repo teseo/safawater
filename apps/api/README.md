@@ -22,8 +22,10 @@ pnpm migrate
 - `GET /health`
 - `GET /meta`
 - `GET /sources`
+- `GET /dams`
 - `GET /dams/:damName/latest`
 - `GET /dams/:damName/history?from=YYYY-MM-DD&to=YYYY-MM-DD&limit=500`
+- `POST /refresh`
 - `POST /__dev/seed` (dev only)
 
 ## Examples
@@ -31,6 +33,7 @@ pnpm migrate
 curl http://localhost:3000/health
 curl http://localhost:3000/meta
 curl http://localhost:3000/sources
+curl -X POST http://localhost:3000/refresh -H 'content-type: application/json' -d '{"force":true}'
 curl -X POST http://localhost:3000/__dev/seed
 curl http://localhost:3000/dams/Vaal%20Dam/latest
 curl "http://localhost:3000/dams/Vaal%20Dam/history?limit=10"
