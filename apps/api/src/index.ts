@@ -1,12 +1,29 @@
-import express from "express";
+import { createServer } from "./server";
+import { buildApp } from "./app";
+import { initDatabase } from "./db";
+import { runMigrations } from "./db/migrate";
 
-const app = express();
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+const app = createServer();
 
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
-});
+const start = async () => {
+  await buildApp(app);
+  const db = initDatabase(app.config);
+  const migrationsRun = runMigrations(db, app.config.migrationsPath);
 
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-});
+  try {
+    await app.listen({ port: app.config.port, host: "0.0.0.0" });
+    app.log.info(
+      {
+        port: app.config.port,
+        env: app.config.env,
+        migrationsRun
+      },
+      "API server started"
+    );
+  } catch (error) {
+    app.log.error({ err: error }, "Failed to start server");
+    process.exit(1);
+  }
+};
+
+start();
