@@ -1,11 +1,16 @@
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { getHistoryByDam, getLatestByDam, listDamNames } from "../db/dao/observations";
+import type {FastifyInstance} from "fastify";
+import {z} from "zod";
+import {getHistoryByDam, getLatestByDam, listDamNames, type Resolution} from "@api/db/dao/observations";
 
 const historyQuerySchema = z.object({
   from: z.string().optional(),
   to: z.string().optional(),
-  limit: z.coerce.number().int().min(1).max(500).optional()
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  resolution: z.enum(["realtime", "weekly", "all"]).optional()
+});
+
+const latestQuerySchema = z.object({
+  resolution: z.enum(["realtime", "weekly", "auto"]).optional()
 });
 
 const datePattern = /^\d{4}-\d{2}-\d{2}/;
@@ -23,7 +28,9 @@ export function registerDamRoutes(app: FastifyInstance) {
 
   app.get("/dams/:damName/latest", async (request, reply) => {
     const { damName } = request.params as { damName: string };
-    const result = getLatestByDam(damName);
+    const parsed = latestQuerySchema.safeParse(request.query);
+    const resolution = parsed.success ? parsed.data.resolution : undefined;
+    const result = getLatestByDam(damName, resolution ?? "auto");
 
     if (!result) {
       reply.status(404).send({
@@ -54,7 +61,7 @@ export function registerDamRoutes(app: FastifyInstance) {
       return;
     }
 
-    const { from, to, limit } = parsed.data;
+    const { from, to, limit, resolution } = parsed.data;
 
     if (!isValidDate(from) || !isValidDate(to)) {
       reply.status(400).send({
@@ -67,7 +74,12 @@ export function registerDamRoutes(app: FastifyInstance) {
       return;
     }
 
-    const results = getHistoryByDam(damName, from, to, limit ?? 500);
-    return results;
+    return getHistoryByDam(
+        damName,
+        from,
+        to,
+        limit ?? 500,
+        (resolution ?? "all") as Resolution
+    );
   });
 }

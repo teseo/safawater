@@ -5,6 +5,8 @@
     "moduleResolution": "NodeNext",
     "baseUrl": ".",
     "paths": {
+      "@api/*": ["apps/api/src/*"],
+      "@web/*": ["apps/web/src/*"],
       "@shared": ["packages/shared/src/index.ts"],
       "@shared/*": ["packages/shared/src/*"]
     },

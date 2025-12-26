@@ -1,14 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseVaalRealtime } from "../src/services/dws/parse-vaal-realtime";
+import { parseVaalRealtime } from "@api/services/dws/parse-vaal-realtime";
 
 test("parses Vaal realtime snapshot", () => {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const fixture = fs.readFileSync(
-    path.join(__dirname, "fixtures", "vaal-realtime.html"),
-    "utf8"
-  );
+  const fixture = fs.readFileSync(path.join(__dirname, "fixtures", "vaal-realtime.html"), "utf8");
 
   const results = parseVaalRealtime(fixture);
   expect(results.length).toBe(1);

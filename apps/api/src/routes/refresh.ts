@@ -5,7 +5,7 @@ import {
   scrapeVaalRealtime,
   scrapeVaalWeekly,
   SOURCE_IDS
-} from "../services/dws/scrape";
+} from "@api/services/dws/scrape";
 
 const bodySchema = z.object({
   sources: z.array(z.enum(SOURCE_IDS)).optional(),
@@ -50,6 +50,14 @@ export function registerRefreshRoutes(app: FastifyInstance) {
           break;
         case "vaal_realtime":
           result = await scrapeVaalRealtime(app.config.cacheTtlSeconds, force);
+          break;
+        default:
+          result = {
+            fetched: false,
+            skippedByTtl: false,
+            observations: 0,
+            error: "Unknown source"
+          };
           break;
       }
 

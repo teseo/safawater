@@ -1,4 +1,4 @@
-import { getDb } from "../index";
+import { getDb } from "@api/db";
 
 type FetchRunInput = {
   sourceId: string;

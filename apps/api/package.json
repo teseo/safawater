@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "BACKFILL_DEBUG=true tsx watch src/index.ts",
     "migrate": "tsx src/db/migrate.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "jest",
     "start": "node dist/index.js"
@@ -17,13 +17,18 @@
     "better-sqlite3": "^9.4.5",
     "cheerio": "^1.0.0-rc.12",
     "fastify": "^4.28.1",
+    "pdf-parse": "^1.1.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.5.4",
+    "@types/pdf-parse": "^1.1.4",
+    "domhandler": "^5.0.3",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
+    "tsc-alias": "^1.8.10",
     "tsx": "^4.19.1",
     "typescript": "^5.5.4"
   }

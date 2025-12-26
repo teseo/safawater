@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "./client";
-import type { DamName, HistoryResponse, LatestResponse, Source } from "./types";
+import { apiFetch } from "@web/lib/api/client";
+import type { DamName, HistoryResponse, LatestResponse, Source } from "@web/lib/api/types";
 
 const retry = 2;
 
@@ -22,10 +22,15 @@ export function useDamNames() {
   });
 }
 
-export function useLatest(damName?: string) {
+export function useLatest(damName?: string, resolution?: "realtime" | "weekly" | "auto") {
   return useQuery({
-    queryKey: ["latest", damName],
-    queryFn: () => apiFetch<LatestResponse>(`/api/dams/${encodeURIComponent(damName ?? "")}/latest`),
+    queryKey: ["latest", damName, resolution],
+    queryFn: () => {
+      const query = resolution ? `?resolution=${resolution}` : "";
+      return apiFetch<LatestResponse>(
+        `/api/dams/${encodeURIComponent(damName ?? "")}/latest${query}`
+      );
+    },
     enabled: Boolean(damName),
     retry
   });
@@ -33,7 +38,13 @@ export function useLatest(damName?: string) {
 
 export function useHistory(
   damName?: string,
-  params?: { from?: string; to?: string; limit?: number }
+  params?: {
+    from?: string;
+    to?: string;
+    limit?: number;
+    resolution?: "realtime" | "weekly" | "all";
+  },
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: ["history", damName, params],
@@ -48,11 +59,14 @@ export function useHistory(
       if (params?.limit) {
         search.set("limit", String(params.limit));
       }
+      if (params?.resolution) {
+        search.set("resolution", params.resolution);
+      }
       const suffix = search.toString();
       const url = `/api/dams/${encodeURIComponent(damName ?? "")}/history${suffix ? `?${suffix}` : ""}`;
       return apiFetch<HistoryResponse>(url);
     },
-    enabled: Boolean(damName),
+    enabled: options?.enabled ?? Boolean(damName),
     retry
   });
 }
@@ -74,11 +88,37 @@ export function useRefresh() {
   });
 }
 
+type BackfillResponse = {
+  ok: boolean;
+  downloaded: number;
+  parsed: number;
+  inserted: number;
+  errors?: Array<{ url: string; message: string }>;
+};
+
+export function useBackfill() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { preset: "month" | "year"; force?: boolean }) =>
+      apiFetch<BackfillResponse>("/api/backfill", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["history"] });
+      client.invalidateQueries({ queryKey: ["latest"] });
+      client.invalidateQueries({ queryKey: ["dams"] });
+    }
+  });
+}
+
 export function useHealth() {
   return useQuery({
     queryKey: ["health"],
     queryFn: () => apiFetch<{ ok: boolean }>("/api/health"),
     retry: 1,
-    refetchInterval: 10000
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false
   });
 }

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { cn } from "@web/lib/utils";
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
@@ -61,11 +61,7 @@ const CommandGroup = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Group>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Group>
 >(({ className, ...props }, ref) => (
-  <CommandPrimitive.Group
-    ref={ref}
-    className={cn("space-y-1", className)}
-    {...props}
-  />
+  <CommandPrimitive.Group ref={ref} className={cn("space-y-1", className)} {...props} />
 ));
 CommandGroup.displayName = "CommandGroup";
 

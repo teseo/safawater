@@ -1,9 +1,16 @@
-import type { Observation } from "../lib/api/types";
-import { formatDateTime } from "../lib/date";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Skeleton } from "./ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import type { Observation } from "@web/lib/api/types";
+import { formatDateTime } from "@web/lib/date";
+import { Badge } from "@web/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card";
+import { Skeleton } from "@web/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@web/components/ui/table";
 
 function safeParseExtra(extraJson: string | null) {
   if (!extraJson) {
@@ -26,18 +33,20 @@ function formatPercent(value?: number | null) {
 
 export function ObservationsTable({
   history,
-  loading
+  loading,
+  emptyLabel,
+  resolution
 }: {
   history: Observation[];
   loading: boolean;
+  emptyLabel?: string;
+  resolution?: "realtime" | "weekly";
 }) {
   if (loading) {
     return <Skeleton className="h-64 w-full" />;
   }
 
-  const sorted = [...history].sort((a, b) =>
-    b.observedAt.localeCompare(a.observedAt)
-  );
+  const sorted = [...history].sort((a, b) => b.observedAt.localeCompare(a.observedAt));
 
   return (
     <Card>
@@ -47,7 +56,7 @@ export function ObservationsTable({
       <CardContent>
         {sorted.length === 0 ? (
           <div className="text-sm text-mutedForeground">
-            No observations available.
+            {emptyLabel ?? "No observations available."}
           </div>
         ) : (
           <Table>
@@ -70,7 +79,14 @@ export function ObservationsTable({
                 return (
                   <TableRow key={`${row.id}-${row.observedAt}`}>
                     <TableCell>{formatDateTime(row.observedAt)}</TableCell>
-                    <TableCell>{formatPercent(row.levelPercent)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span>{formatPercent(row.levelPercent)}</span>
+                        {resolution === "realtime" && (row.levelPercent ?? 0) > 100 ? (
+                          <Badge className="bg-amber-500 text-white">Above FSL</Badge>
+                        ) : null}
+                      </div>
+                    </TableCell>
                     <TableCell>{formatPercent(row.lastWeekPercent)}</TableCell>
                     <TableCell>{formatPercent(row.lastYearPercent)}</TableCell>
                     <TableCell>

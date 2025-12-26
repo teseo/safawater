@@ -1,5 +1,5 @@
 {
-  "name": "southafricaProject",
+  "name": "south-africa-project",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.12.3",
@@ -7,10 +7,21 @@
     "dev": "concurrently -k \"pnpm --filter @app/api dev\" \"pnpm --filter @app/web dev\"",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "lint": "echo \"no lint configured\""
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
     "concurrently": "^9.0.1",
+    "eslint": "^9.39.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
     "typescript": "^5.5.4"
   }
 }

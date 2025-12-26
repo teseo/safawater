@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import type { ParsedObservation } from "@shared";
-import { normalizeText, parsePercent } from "./parse-utils";
+import { normalizeText, parsePercent } from "@api/services/dws/parse-utils";
 
 function parseObservedAt(text: string) {
   const isoMatch = text.match(/\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?/);

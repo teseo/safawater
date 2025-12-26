@@ -1,13 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import type Database from "better-sqlite3";
-import { openDatabase } from "./connection";
-import { loadConfig } from "../plugins/config";
+import { openDatabase } from "@api/db/connection";
+import { loadConfig } from "@api/plugins/config";
 
 const MIGRATIONS_TABLE = "_migrations";
 
-export function runMigrations(db: Database, migrationsPath: string) {
+type DatabaseInstance = ReturnType<typeof openDatabase>;
+
+export function runMigrations(db: DatabaseInstance, migrationsPath: string) {
   const absolutePath = path.resolve(process.cwd(), migrationsPath);
 
   if (!fs.existsSync(absolutePath)) {
@@ -21,12 +22,10 @@ export function runMigrations(db: Database, migrationsPath: string) {
     )`
   );
 
-  const applied = new Set(
-    db
-      .prepare(`SELECT name FROM ${MIGRATIONS_TABLE}`)
-      .all()
-      .map((row) => row.name as string)
-  );
+  const appliedRows = db.prepare(`SELECT name FROM ${MIGRATIONS_TABLE}`).all() as Array<{
+    name: string;
+  }>;
+  const applied = new Set(appliedRows.map((row) => row.name));
 
   const files = fs
     .readdirSync(absolutePath)
@@ -43,9 +42,10 @@ export function runMigrations(db: Database, migrationsPath: string) {
     const sql = fs.readFileSync(path.join(absolutePath, file), "utf8");
     db.exec(sql);
 
-    db.prepare(
-      `INSERT INTO ${MIGRATIONS_TABLE} (name, run_at) VALUES (?, ?)`
-    ).run(file, new Date().toISOString());
+    db.prepare(`INSERT INTO ${MIGRATIONS_TABLE} (name, run_at) VALUES (?, ?)`).run(
+      file,
+      new Date().toISOString()
+    );
 
     ran += 1;
   }

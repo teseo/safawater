@@ -1,8 +1,9 @@
-import type Database from "better-sqlite3";
-import { openDatabase } from "./connection";
-import type { AppConfig } from "../plugins/config";
+import { openDatabase } from "@api/db/connection";
+import type { AppConfig } from "@api/plugins/config";
 
-let dbInstance: Database | null = null;
+type DatabaseInstance = ReturnType<typeof openDatabase>;
+
+let dbInstance: DatabaseInstance | null = null;
 
 export function initDatabase(config: AppConfig) {
   if (!dbInstance) {

@@ -1,17 +1,13 @@
 import crypto from "node:crypto";
-import { fetchHtml, HttpError } from "../http";
-import { parseGautengWeekly } from "./parse-gauteng-weekly";
-import { parseVaalWeekly } from "./parse-vaal-weekly";
-import { parseVaalRealtime } from "./parse-vaal-realtime";
-import { insertFetchRun, getLatestSuccess } from "../../db/dao/fetch-runs";
-import { upsertObservation } from "../../db/dao/observations";
+import { fetchHtml, HttpError } from "@api/services/http";
+import { parseGautengWeekly } from "@api/services/dws/parse-gauteng-weekly";
+import { parseVaalWeekly } from "@api/services/dws/parse-vaal-weekly";
+import { parseVaalRealtime } from "@api/services/dws/parse-vaal-realtime";
+import { insertFetchRun, getLatestSuccess } from "@api/db/dao/fetch-runs";
+import { upsertObservation } from "@api/db/dao/observations";
 import type { ParsedObservation } from "@shared";
 
-export const SOURCE_IDS = [
-  "gauteng_weekly",
-  "vaal_weekly",
-  "vaal_realtime"
-] as const;
+export const SOURCE_IDS = ["gauteng_weekly", "vaal_weekly", "vaal_realtime"] as const;
 
 type SourceId = (typeof SOURCE_IDS)[number];
 
@@ -72,9 +68,9 @@ async function scrapeSource(
     const html = await fetchHtml(url, { timeoutMs: 15000 });
     const observations = parse(html);
 
-    let inserted = 0;
+    let _inserted = 0;
     observations.forEach((observation: ParsedObservation) => {
-      inserted += upsertObservation({
+      _inserted += upsertObservation({
         sourceId: observation.sourceId,
         damName: observation.damName,
         region: observation.region ?? null,
@@ -101,8 +97,15 @@ async function scrapeSource(
       observations: observations.length
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const httpStatus = error instanceof HttpError ? error.status : undefined;
+    let message = "Unknown error";
+    let httpStatus: number | undefined;
+
+    if (error instanceof HttpError) {
+      message = error.message;
+      httpStatus = error.status;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
 
     insertFetchRun({
       sourceId,

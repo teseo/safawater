@@ -1,4 +1,5 @@
-import * as cheerio from "cheerio";
+import type { CheerioAPI } from "cheerio";
+import type { AnyNode } from "domhandler";
 
 export function normalizeText(value: string) {
   return value.replace(/\s+/g, " ").trim();
@@ -20,7 +21,7 @@ export function parsePercent(value?: string | null) {
 }
 
 export function findTableByHeaders(
-  $: cheerio.CheerioAPI,
+  $: CheerioAPI,
   headerMatchers: Record<string, (header: string) => boolean>
 ) {
   const tables = $("table").toArray();
@@ -57,7 +58,7 @@ export function findTableByHeaders(
   return null;
 }
 
-export function extractRowCells($: cheerio.CheerioAPI, row: cheerio.Element) {
+export function extractRowCells($: CheerioAPI, row: AnyNode) {
   return $(row)
     .find("td, th")
     .toArray()

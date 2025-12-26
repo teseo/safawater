@@ -1,4 +1,4 @@
-import { getDb } from "../index";
+import { getDb } from "@api/db";
 
 export type ObservationInput = {
   sourceId: string;
@@ -79,16 +79,55 @@ function mapObservation(row: ObservationRow) {
   };
 }
 
-export function getLatestByDam(damName: string) {
+export type Observation = ReturnType<typeof mapObservation>;
+
+const REALTIME_SOURCE_IDS = ["vaal_realtime"];
+
+export type Resolution = "realtime" | "weekly" | "all" | "auto";
+
+function buildResolutionClause(resolution: Resolution) {
+  if (resolution === "realtime") {
+    return {
+      clause: `source_id IN (${REALTIME_SOURCE_IDS.map(() => "?").join(",")})`,
+      params: REALTIME_SOURCE_IDS
+    };
+  }
+
+  if (resolution === "weekly") {
+    return {
+      clause: `source_id NOT IN (${REALTIME_SOURCE_IDS.map(() => "?").join(",")})`,
+      params: REALTIME_SOURCE_IDS
+    };
+  }
+
+  return { clause: "", params: [] };
+}
+
+export function getLatestByDam(
+  damName: string,
+  resolution: Resolution = "auto"
+): Observation | null {
   const db = getDb();
+  if (resolution === "auto") {
+    const realtime: Observation | null = getLatestByDam(damName, "realtime");
+    if (realtime) {
+      return realtime;
+    }
+    return getLatestByDam(damName, "weekly");
+  }
+
+  const filter = buildResolutionClause(resolution);
+  const clause = filter.clause ? `AND ${filter.clause}` : "";
+  const params = [damName, ...filter.params];
+
   const row = db
     .prepare(
       `SELECT * FROM dam_level_observations
-       WHERE dam_name = ?
+       WHERE dam_name = ? ${clause}
        ORDER BY observed_at DESC
        LIMIT 1`
     )
-    .get(damName) as ObservationRow | undefined;
+    .get(...params) as ObservationRow | undefined;
 
   return row ? mapObservation(row) : null;
 }
@@ -97,12 +136,19 @@ export function getHistoryByDam(
   damName: string,
   from?: string,
   to?: string,
-  limit = 500
+  limit = 500,
+  resolution: Resolution = "all"
 ) {
   const db = getDb();
 
   const clauses: string[] = ["dam_name = ?"];
   const params: Array<string | number> = [damName];
+
+  const filter = buildResolutionClause(resolution);
+  if (filter.clause) {
+    clauses.push(filter.clause);
+    params.push(...filter.params);
+  }
 
   if (from) {
     clauses.push("observed_at >= ?");
@@ -136,4 +182,17 @@ export function listDamNames() {
     .all() as Array<{ damName: string }>;
 
   return rows.map((row) => row.damName);
+}
+
+export function hasObservation(sourceId: string, damName: string, observedAt: string) {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT 1 FROM dam_level_observations
+       WHERE source_id = ? AND dam_name = ? AND observed_at = ?
+       LIMIT 1`
+    )
+    .get(sourceId, damName, observedAt) as { 1: number } | undefined;
+
+  return Boolean(row);
 }

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { upsertObservation } from "../db/dao/observations";
+import { upsertObservation } from "@api/db/dao/observations";
 
 export function registerDevRoutes(app: FastifyInstance) {
   app.post("/__dev/seed", async () => {

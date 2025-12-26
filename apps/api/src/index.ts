@@ -1,7 +1,7 @@
-import { createServer } from "./server";
-import { buildApp } from "./app";
-import { initDatabase } from "./db";
-import { runMigrations } from "./db/migrate";
+import { createServer } from "@api/server";
+import { buildApp } from "@api/app";
+import { initDatabase } from "@api/db";
+import { runMigrations } from "@api/db/migrate";
 
 const app = createServer();
 

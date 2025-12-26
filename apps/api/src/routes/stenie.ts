@@ -1,9 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import type { HealthStatus } from "@shared";
 
+type StenieResponse = {
+  type: string;
+  message: string;
+};
 export function registerStenieRoutes(app: FastifyInstance) {
-    app.get("/stenie", async () => {
-        const response: HealthStatus = { "stenie": "Good people" };
-        return response;
-    });
+  app.get("/stenie", async () => {
+    const response: StenieResponse = { type: "stenie", message: "Good people" };
+    return response;
+  });
 }

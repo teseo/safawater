@@ -10,6 +10,7 @@ module.exports = {
     }
   },
   moduleNameMapper: {
+    "^@api/(.*)$": "<rootDir>/src/$1",
     "^@shared$": "<rootDir>/../../packages/shared/src/index.ts",
     "^@shared/(.*)$": "<rootDir>/../../packages/shared/src/$1"
   }

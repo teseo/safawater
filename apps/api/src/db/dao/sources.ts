@@ -1,4 +1,4 @@
-import { getDb } from "../index";
+import { getDb } from "@api/db";
 
 type SourceRow = {
   id: string;
@@ -11,9 +11,7 @@ type SourceRow = {
 export function listSources() {
   const db = getDb();
   const rows = db
-    .prepare(
-      "SELECT id, name, url, active, created_at FROM sources ORDER BY name"
-    )
+    .prepare("SELECT id, name, url, active, created_at FROM sources ORDER BY name")
     .all() as SourceRow[];
 
   return rows.map((row) => ({

@@ -1,15 +1,47 @@
 import { ArrowDownRight, ArrowUpRight, Droplet } from "lucide-react";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Skeleton } from "./ui/skeleton";
-import type { Observation } from "../lib/api/types";
-import { formatDateTime } from "../lib/date";
+import { Badge } from "@web/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@web/components/ui/card";
+import { Skeleton } from "@web/components/ui/skeleton";
+import type { Observation } from "@web/lib/api/types";
+import { formatDateTime } from "@web/lib/date";
 
 function formatPercent(value?: number | null) {
   if (value === null || value === undefined) {
     return "—";
   }
   return `${value.toFixed(1)}%`;
+}
+
+function parseExtra(extraJson?: string | null) {
+  if (!extraJson) {
+    return null;
+  }
+  try {
+    return JSON.parse(extraJson) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function extractNumber(value: unknown) {
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.replace(/[^0-9.-]/g, ""));
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+}
+
+function formatValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return "—";
 }
 
 function DeltaBadge({ label, value }: { label: string; value?: number | null }) {
@@ -29,7 +61,17 @@ function DeltaBadge({ label, value }: { label: string; value?: number | null }) 
   );
 }
 
-export function KpiCards({ latest, loading }: { latest?: Observation; loading: boolean }) {
+export function KpiCards({
+  latest,
+  loading,
+  fallback,
+  resolution
+}: {
+  latest?: Observation;
+  loading: boolean;
+  fallback?: boolean;
+  resolution: "realtime" | "weekly";
+}) {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -39,6 +81,12 @@ export function KpiCards({ latest, loading }: { latest?: Observation; loading: b
       </div>
     );
   }
+
+  const aboveFsl = resolution === "realtime" && (latest?.levelPercent ?? 0) > 100;
+  const extra = parseExtra(latest?.extraJson ?? null);
+  const inflow = extractNumber(extra?.Inflow ?? extra?.inflow ?? extra?.inflowCumec);
+  const outflow = extractNumber(extra?.Outflow ?? extra?.outflow ?? extra?.outflowCumec);
+  const gates = formatValue(extra?.["Gates Open"] ?? extra?.gatesOpen ?? extra?.gates);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -50,12 +98,24 @@ export function KpiCards({ latest, loading }: { latest?: Observation; loading: b
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-semibold">
-            {formatPercent(latest?.levelPercent)}
+          <div className="text-3xl font-semibold">{formatPercent(latest?.levelPercent)}</div>
+          <div className="mt-2 flex items-center gap-2 text-sm text-mutedForeground">
+            <span>{latest?.region ?? "Unknown region"}</span>
+            {fallback ? <Badge variant="outline">fallback</Badge> : null}
+            {aboveFsl ? <Badge className="bg-amber-500 text-white">Above FSL</Badge> : null}
           </div>
-          <div className="mt-2 text-sm text-mutedForeground">
-            {latest?.region ?? "Unknown region"}
-          </div>
+          {aboveFsl ? (
+            <div className="mt-2 text-xs text-amber-700">
+              Above Full Supply Level — spill/flood conditions
+            </div>
+          ) : null}
+          {resolution === "realtime" ? (
+            <div className="mt-3 grid gap-1 text-xs text-mutedForeground">
+              <div>Gates open: {gates}</div>
+              <div>Inflow: {inflow ?? "—"} cumec</div>
+              <div>Outflow: {outflow ?? "—"} cumec</div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
       <Card>
@@ -63,12 +123,8 @@ export function KpiCards({ latest, loading }: { latest?: Observation; loading: b
           <CardTitle>Observed At</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-xl font-semibold">
-            {formatDateTime(latest?.observedAt)}
-          </div>
-          <div className="mt-2 text-sm text-mutedForeground">
-            Source: {latest?.sourceId ?? "—"}
-          </div>
+          <div className="text-xl font-semibold">{formatDateTime(latest?.observedAt)}</div>
+          <div className="mt-2 text-sm text-mutedForeground">Source: {latest?.sourceId ?? "—"}</div>
         </CardContent>
       </Card>
       <Card>
